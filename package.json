@@ -1,0 +1,28 @@
+{
+  "name": "yice-reader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node serve.mjs",
+    "build": "node tools/build-www.mjs && cap sync android",
+    "build:web": "node tools/build-www.mjs",
+    "cap:add": "cap add android",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
+    "apk": "call android\\build-apk.bat",
+    "samples": "python tools/make-samples.py",
+    "pack": "node tools/pack-manga.mjs",
+    "verify": "python tools/verify2.py",
+    "verify:tablet": "python tools/verify8.py",
+    "verify:bulk": "python tools/verify9.py"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.3",
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/cli": "^6.2.3",
+    "@capacitor/core": "^6.2.3",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/status-bar": "^6.0.3"
+  }
+}

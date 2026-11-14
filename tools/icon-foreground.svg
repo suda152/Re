@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="loop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4d70f2"/>
+      <stop offset=".55" stop-color="#10309f"/>
+      <stop offset="1" stop-color="#001c62"/>
+    </linearGradient>
+    <linearGradient id="text" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c3cbdb"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <!-- 自适应图标前景：内容缩到中心安全区（约 58%），无背景 -->
+  <g transform="translate(256 256) scale(0.58) translate(-256 -256)">
+    <g fill="none" stroke-linecap="round">
+      <path d="M256 256 C256 206 216 164 164 164 C110 164 72 206 72 256 C72 306 110 348 164 348 C216 348 256 306 256 256 C256 206 296 164 348 164 C402 164 440 206 440 256 C440 306 402 348 348 348 C296 348 256 306 256 256 Z"
+            transform="translate(0,14)" stroke="#000000" stroke-opacity=".5" stroke-width="44" filter="url(#soft)"/>
+      <path d="M256 256 C256 206 216 164 164 164 C110 164 72 206 72 256 C72 306 110 348 164 348 C216 348 256 306 256 256 C256 206 296 164 348 164 C402 164 440 206 440 256 C440 306 402 348 348 348 C296 348 256 306 256 256 Z"
+            transform="translate(0,9)" stroke="#001a5e" stroke-width="40"/>
+      <path d="M256 256 C256 206 216 164 164 164 C110 164 72 206 72 256 C72 306 110 348 164 348 C216 348 256 306 256 256 C256 206 296 164 348 164 C402 164 440 206 440 256 C440 306 402 348 348 348 C296 348 256 306 256 256 Z"
+            stroke="url(#loop)" stroke-width="40"/>
+      <path d="M256 256 C256 206 216 164 164 164 C110 164 72 206 72 256 C72 306 110 348 164 348 C216 348 256 306 256 256 C256 206 296 164 348 164 C402 164 440 206 440 256 C440 306 402 348 348 348 C296 348 256 306 256 256 Z"
+            transform="translate(0,-3)" stroke="rgba(255,255,255,.18)" stroke-width="9"/>
+    </g>
+    <g font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="132" text-anchor="middle">
+      <text x="256" y="312" fill="#000000" fill-opacity=".45" transform="translate(0,7)" filter="url(#soft)">Re</text>
+      <text x="256" y="312" fill="#001a5e" transform="translate(0,5)">Re</text>
+      <text x="256" y="312" fill="url(#text)">Re</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,194 @@
+/* ===========================================================
+   一册 · 平板适配层
+   在 app.css / reader.css 之后加载，只做「平板与移动壳」相关覆盖：
+   1. 安全区（刘海 / 手势条 / 圆角）
+   2. 横屏宽屏：侧栏展开、详情改为右侧面板、阅读器目录常驻左栏
+   3. 触屏目标尺寸
+   4. 低性能设备降级（关模糊、color-mix 兜底）
+   =========================================================== */
+
+:root {
+  /* JS 会用实测值覆盖，未注入时退回系统变量 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+html {
+  /* WebView 不要跟随系统字号放大，否则分页会错位 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ================= 安全区 ================= */
+
+.app {
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+
+.select-dock { bottom: calc(16px + var(--safe-bottom)); }
+
+.toast-wrap { bottom: calc(26px + var(--safe-bottom)); }
+body.has-selection .toast-wrap { bottom: calc(96px + var(--safe-bottom)); }
+
+.import-panel {
+  right: calc(22px + var(--safe-right));
+  bottom: calc(22px + var(--safe-bottom));
+}
+
+/* 导入方式：触屏下给足命中区 */
+html[data-input="touch"] .import-choices .choice { padding: 16px; min-height: 68px; }
+html[data-input="touch"] .import-head #importCancel { min-height: 36px; padding: 0 8px; }
+
+.dialog {
+  max-height: calc(100dvh - 36px - var(--safe-top) - var(--safe-bottom));
+}
+
+/* 阅读器：正文区避开刘海与手势条，工具条自己留出内边距 */
+.reader-stage {
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+
+.reader-top {
+  height: calc(62px + var(--safe-top));
+  padding-top: var(--safe-top);
+  padding-left: calc(12px + var(--safe-left));
+  padding-right: calc(16px + var(--safe-right));
+}
+
+.reader-bottom {
+  height: calc(64px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  padding-left: calc(16px + var(--safe-left));
+  padding-right: calc(16px + var(--safe-right));
+}
+
+.reader-panel {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-right: var(--safe-right);
+}
+
+/* ================= 触屏目标 ================= */
+
+html[data-input="touch"] .btn { height: 44px; padding: 0 18px; font-size: 13.5px; }
+html[data-input="touch"] .icon-btn { width: 44px; height: 44px; }
+html[data-input="touch"] .nav-item { height: 48px; }
+html[data-input="touch"] .chip { height: 36px; padding: 0 16px; font-size: 13px; }
+html[data-input="touch"] .search,
+html[data-input="touch"] .select-wrap select { height: 44px; }
+html[data-input="touch"] .card:hover { transform: none; }
+html[data-input="touch"] .ctx-menu button { padding: 11px 12px; font-size: 13px; }
+html[data-input="touch"] .toc-item { padding: 12px 10px; }
+html[data-input="touch"] .reader-track input[type="range"]::-webkit-slider-thumb { width: 22px; height: 22px; }
+
+/* ================= 横屏宽屏：书库与阅读器双栏 ================= */
+
+@media (min-width: 1000px) and (orientation: landscape) {
+  /* 侧栏从图标条展开成完整导航，平板横屏有足够的横向空间 */
+  .app { grid-template-columns: 208px minmax(0, 1fr); }
+
+  .sidebar { padding: 20px 14px 16px; align-items: stretch; }
+  .brand { padding: 4px 8px 20px; }
+  .brand-text { display: flex; }
+  .nav-item { justify-content: flex-start; padding: 0 12px; height: 46px; }
+  .nav-item span { display: block; }
+  .nav-count { position: static; font-size: 11px; padding: 1px 7px; line-height: 1.5; }
+  .storage { width: auto; padding: 14px 12px 8px; }
+  .storage-head { justify-content: space-between; font-size: 11.5px; }
+  .storage-head span:first-child { display: inline; }
+  .link-btn { display: inline-flex; }
+
+  .topbar { padding: 18px 26px 12px; }
+  .content { padding: 4px 26px 36px; }
+  .shelf { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 26px 22px; }
+
+  /* 详情不再是居中弹窗，而是从右侧滑出的信息面板 */
+  #detailDialog[open] {
+    position: fixed;
+    inset: var(--safe-top) var(--safe-right) var(--safe-bottom) auto;
+    margin: 0;
+    width: min(440px, 46vw);
+    max-width: none;
+    height: auto;      /* UA 给 dialog 的是 fit-content，不铺满 */
+    max-height: none;
+    border-radius: 0;
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    animation: sheetIn .24s var(--ease);
+  }
+  #detailDialog[open] .detail {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 18px;
+    padding: 22px 24px 32px;
+    min-height: 100%;
+  }
+  #detailDialog[open] .detail-cover { width: 146px; margin: 0 auto; }
+  #detailDialog[open] .detail-info { min-height: 100%; }
+  /* 面板模式空间富余，动作按钮沉到底部更像原生侧栏 */
+  #detailDialog[open] .detail-actions { margin-top: auto; padding-top: 18px; }
+  #detailDialog::backdrop { background: rgba(23, 25, 27, .22); backdrop-filter: none; }
+}
+
+@keyframes sheetIn {
+  from { transform: translateX(26px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* 阅读器：目录 / 设置变成常驻左栏，正文让出位置（而不是盖住正文） */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .reader-panel {
+    left: 0;
+    right: auto;
+    width: 344px;
+    max-width: none;
+    border-left: none;
+    border-right: 1px solid var(--rline);
+    padding-left: var(--safe-left);
+    transform: translateX(-101%);
+  }
+  .reader-panel.open { transform: none; }
+
+  .reader.rail-open .reader-stage { left: calc(344px + var(--safe-left)); }
+  .reader.rail-open .reader-top,
+  .reader.rail-open .reader-bottom { left: calc(344px + var(--safe-left)); }
+}
+
+/* ================= 竖屏平板 ================= */
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .shelf { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 24px 20px; }
+  .content { padding: 4px 24px 32px; }
+  .topbar { padding: 18px 24px 12px; }
+  .reader { --page-pad: 44px; }
+}
+
+/* ================= 低性能设备降级 ================= */
+
+html[data-perf="low"] .reader-chrome,
+html[data-perf="low"] .reader-panel,
+html[data-perf="low"] .drop-veil,
+html[data-perf="low"] .dialog::backdrop { backdrop-filter: none; }
+
+/* 点阵纹理在低端设备上省掉 */
+html[data-perf="low"] body { background-image: none; }
+
+html[data-perf="low"] .reader-chrome { background: var(--rbg); }
+html[data-perf="low"] .reader-panel { background: var(--rbg); }
+html[data-perf="low"] .drop-veil { background: color-mix(in srgb, var(--bg) 92%, transparent); }
+
+/* 旧 WebView（Chrome 9x）没有 color-mix，给关键位置一个静态兜底 */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  *::-webkit-scrollbar-thumb { background: var(--muted); }
+  .btn.primary:hover { background: var(--accent); }
+  .btn.ghost:hover { border-color: var(--accent); }
+  .drop-veil { background: var(--bg); }
+  .card-check { background: var(--accent); }
+}

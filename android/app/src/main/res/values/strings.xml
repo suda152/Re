@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Re</string>
+    <string name="title_activity_main">Re</string>
+    <string name="package_name">cc.tomereader.yice</string>
+    <string name="custom_url_scheme">cc.tomereader.yice</string>
+</resources>

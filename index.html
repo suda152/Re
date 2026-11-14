@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Re">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9eaec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141618">
+<title>Re</title>
+<link rel="icon" href="./assets/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./assets/icon-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="./css/app.css">
+<link rel="stylesheet" href="./css/reader.css">
+<link rel="stylesheet" href="./css/tablet.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-text">
+        <strong>Re</strong>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav" aria-label="主导航">
+      <button class="nav-item" data-view="library" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 17.5h15"/></svg>
+        <span>书架</span><em class="nav-count" id="navCount">0</em>
+      </button>
+      <button class="nav-item" data-view="recent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+        <span>最近阅读</span>
+      </button>
+      <button class="nav-item" data-view="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V9M10 19V5M16 19v-6M22 19H2"/></svg>
+        <span>阅读概览</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>
+        <span>设置</span>
+      </button>
+    </nav>
+
+    <div class="storage">
+      <div class="storage-head"><span>存储占用</span><span id="storageText">—</span></div>
+      <div class="storage-bar"><i id="storageFill" style="width:0%"></i></div>
+      <button class="link-btn" data-action="clear-all">清空全部数据</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="viewTitle">书架</h1>
+        <p id="viewSub">全部藏书</p>
+      </div>
+      <div class="topbar-tools">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+          <input id="search" type="search" placeholder="搜索书名 / 作者" autocomplete="off">
+        </label>
+        <label class="select-wrap">
+          <select id="sortBy" aria-label="排序方式">
+            <option value="recent">最近阅读</option>
+            <option value="added">导入时间</option>
+            <option value="title">书名</option>
+            <option value="progress">阅读进度</option>
+          </select>
+        </label>
+        <button class="btn ghost" id="btnSelect" aria-label="多选合并" title="多选合并">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.2l2.6 2.6 4.6-5"/></svg>
+          <span>多选</span>
+        </button>
+        <button class="btn ghost" id="btnSelectAll" hidden aria-label="全选当前列表" title="全选 / 取消全选">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5.5h11M9 12h11M9 18.5h11"/><path d="M3.5 6l1.6 1.6L7.8 4.9M3.5 12.4l1.6 1.6 2.7-2.7M3.5 18.8l1.6 1.6 2.7-2.7"/></svg>
+          <span>全选</span>
+        </button>
+        <button class="btn primary" id="btnImport">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 16V4M12 4L7 9M12 4l5 5"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+          导入文件
+        </button>
+      </div>
+    </header>
+
+    <section class="content" id="content">
+
+      <div class="view" id="view-library">
+        <div class="chips" id="filters" role="tablist" aria-label="类型筛选">
+          <button class="chip active" data-filter="all" role="tab" aria-selected="true">全部</button>
+          <button class="chip" data-filter="comic" role="tab" aria-selected="false">漫画</button>
+          <button class="chip" data-filter="epub" role="tab" aria-selected="false">小说</button>
+          <button class="chip" data-filter="reading" role="tab" aria-selected="false">在读</button>
+          <button class="chip" data-filter="finished" role="tab" aria-selected="false">读完</button>
+        </div>
+        <div class="shelf-hint" id="shelfHint" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12h10"/><path d="M11 9l3 3-3 3"/><path d="M19 6v12"/></svg>
+          <span>按住卡片划过可连续选中 · Shift 连选 · Esc 退出</span>
+        </div>
+        <div class="shelf" id="shelf"></div>
+        <div class="empty" id="emptyState">
+          <div class="empty-art" aria-hidden="true">
+            <svg viewBox="0 0 120 120" fill="none">
+              <rect x="24" y="30" width="40" height="58" rx="3" stroke="currentColor" stroke-width="2"/>
+              <rect x="66" y="38" width="26" height="50" rx="3" stroke="currentColor" stroke-width="2" opacity=".55"/>
+              <path d="M32 44h24M32 52h24M32 60h16" stroke="currentColor" stroke-width="2" opacity=".5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>书架还是空的</h2>
+          <p>把 cbz、epub、txt 文件拖进窗口，或点击右上角导入。</p>
+          <button class="btn primary" id="btnImportEmpty">开始导入</button>
+        </div>
+      </div>
+
+      <div class="view" id="view-recent" hidden>
+        <div class="recent-list" id="recentList"></div>
+        <div class="empty small" id="recentEmpty" hidden>
+          <h2>还没有阅读记录</h2>
+          <p>打开任意一本书，这里会记录你上次读到的位置。</p>
+        </div>
+      </div>
+
+      <div class="view" id="view-stats" hidden>
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="panel">
+          <h3>书库构成</h3>
+          <div class="bars" id="typeBars"></div>
+        </div>
+      </div>
+
+      <div class="view" id="view-settings" hidden>
+        <div class="panel">
+          <h3>外观</h3>
+          <div class="field">
+            <div><label>界面主题</label><p>影响书架、菜单与对话框的配色。</p></div>
+            <div class="seg" id="themeSeg">
+              <button data-theme-val="light">浅色</button>
+              <button data-theme-val="dark">深色</button>
+              <button data-theme-val="system">跟随系统</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>阅读默认值</h3>
+          <div class="field">
+            <div><label>正文字号</label><p>新打开的书会使用这个字号，之后可在阅读器里为单本单独调整。</p></div>
+            <div class="stepper" id="defFont">
+              <button data-def="fontSize" data-val="-1" aria-label="减小字号">−</button>
+              <div class="val" id="defFontVal">19</div>
+              <button data-def="fontSize" data-val="1" aria-label="增大字号">＋</button>
+            </div>
+          </div>
+          <div class="field">
+            <div><label>漫画默认模式</label><p>单页、双页对开（适合宽屏）或纵向条漫。</p></div>
+            <div class="seg" id="defComicMode">
+              <button data-mode="single">单页</button>
+              <button data-mode="double">双页</button>
+              <button data-mode="scroll">条漫</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>平板</h3>
+          <div class="field">
+            <div><label>手势翻页</label><p>阅读时左右轻扫翻页。从屏幕左右边缘 24px 起手不响应，留给系统返回手势。</p></div>
+            <div class="seg" id="devSwipe">
+              <button data-dev="swipe" data-val="1">开</button>
+              <button data-dev="swipe" data-val="0">关</button>
+            </div>
+          </div>
+          <div class="field">
+            <div><label>横屏默认双页</label><p>漫画在横屏第一次打开时用双页对开，之后可在阅读设置里为单本改掉。</p></div>
+            <div class="seg" id="devDouble">
+              <button data-dev="landscapeDouble" data-val="1">开</button>
+              <button data-dev="landscapeDouble" data-val="0">关</button>
+            </div>
+          </div>
+          <div class="field">
+            <div><label>阅读时保持常亮</label><p>安装为平板 App 后生效；浏览器里由系统电源策略决定。</p></div>
+            <div class="seg" id="devAwake">
+              <button data-dev="keepAwake" data-val="1">开</button>
+              <button data-dev="keepAwake" data-val="0">关</button>
+            </div>
+          </div>
+          <div class="field">
+            <div><label>当前环境</label><p id="devInfo">—</p></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>数据</h3>
+          <div class="field">
+            <div><label>本地存储</label><p id="settingsStorageText">—</p></div>
+            <button class="btn ghost" data-action="clear-all">清空全部</button>
+          </div>
+          <div class="field">
+            <div><label>导入缓存</label><p>系统文件选择器复制文件时留下的临时副本，批量导入前后都可以清掉。</p></div>
+            <button class="btn ghost" id="btnClearImportCache">清理缓存</button>
+          </div>
+          <div class="field">
+            <div><label>快捷键</label><p>阅读时 ← → 翻页，空格下一页，F 全屏，T 目录，Esc 退出。</p></div>
+          </div>
+        </div>
+        <p class="fineprint">Re v1.2 · 数据保存在本机。</p>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<!-- ============ 阅读器 ============ -->
+<div class="reader" id="reader" hidden aria-hidden="true">
+  <div class="reader-stage" id="readerStage"></div>
+
+  <div class="reader-chrome reader-top" id="readerTop">
+    <button class="icon-btn" data-r="close" aria-label="返回书架">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="reader-title">
+      <h2 id="readerTitle">—</h2>
+      <span id="readerMeta"></span>
+    </div>
+    <div class="reader-actions">
+      <button class="ghost-btn" data-r="toc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 11h16M4 16h10"/></svg>
+        目录
+      </button>
+      <button class="ghost-btn" data-r="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 8h14M5 16h14"/><circle cx="9" cy="8" r="2.2" fill="currentColor" stroke="none"/><circle cx="15" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg>
+        阅读设置
+      </button>
+      <button class="icon-btn" data-r="fullscreen" aria-label="全屏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="reader-chrome reader-bottom" id="readerBottom">
+    <button class="icon-btn" data-r="prev" aria-label="上一页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="reader-track">
+      <input type="range" id="readerSlider" min="0" max="1000" value="0" aria-label="阅读进度">
+      <div class="reader-label"><span id="readerPage">—</span><span id="readerPct">0%</span></div>
+    </div>
+    <button class="icon-btn" data-r="next" aria-label="下一页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <aside class="reader-panel" id="readerPanel" aria-hidden="true">
+    <div class="panel-head">
+      <h3 id="panelTitle">目录</h3>
+      <button class="icon-btn" data-r="panel-close" aria-label="关闭面板">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="panel-body" id="panelBody"></div>
+  </aside>
+</div>
+
+<!-- ============ 拖拽遮罩 ============ -->
+<div class="drop-veil" id="dropVeil" hidden>
+  <div class="drop-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4L7 9M12 4l5 5"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+    <strong>松开以导入</strong>
+    <span>支持 cbz / epub / txt，可一次拖入多本</span>
+  </div>
+</div>
+
+<!-- ============ 导入进度 ============ -->
+<div class="import-panel" id="importPanel" hidden>
+  <div class="import-head">
+    <strong id="importTitle">正在导入</strong>
+    <span id="importCount">0 / 0</span>
+    <button class="link-btn" id="importCancel" hidden>停止</button>
+  </div>
+  <ul id="importList"></ul>
+</div>
+
+<!-- ============ 导入方式 ============ -->
+<dialog class="dialog import-menu" id="importMenu">
+  <h3>导入</h3>
+  <p class="merge-lead">支持 cbz / zip / epub / txt / pdf。整个漫画目录可以一次导入，按「第 N 话」自动并成一本书。</p>
+  <div class="import-choices">
+    <button class="choice" id="importPickFolder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7.5A1.5 1.5 0 0 1 17.5 19h-13A1.5 1.5 0 0 1 3 17.5z"/><path d="M12 11.5v4M10 13.5l2-2 2 2"/></svg>
+      <strong>选择文件夹</strong>
+      <span>一次导入目录内所有书，几百话也行，可中途停止</span>
+    </button>
+    <button class="choice" id="importPickFiles">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h7l5 5v12H6z"/><path d="M13 3.5v5h5"/><path d="M12 11.5v4M10.4 13.6L12 12l1.6 1.6"/></svg>
+      <strong>选择文件</strong>
+      <span>从文件管理器里挑几个文件，可多选</span>
+    </button>
+  </div>
+  <div class="dialog-actions">
+    <button class="btn ghost" id="importMenuCancel">取消</button>
+  </div>
+</dialog>
+
+<!-- ============ 右键菜单 ============ -->
+<div class="ctx-menu" id="ctxMenu" hidden role="menu"></div>
+
+<!-- ============ 书籍详情 ============ -->
+<dialog class="dialog" id="detailDialog">
+  <div class="detail">
+    <div class="detail-cover"><img id="detailCover" alt=""></div>
+    <div class="detail-info">
+      <h3 id="detailTitle">—</h3>
+      <p class="detail-author" id="detailAuthor"></p>
+      <dl class="detail-meta" id="detailMeta"></dl>
+      <div class="detail-chapters" id="detailChapters" hidden></div>
+      <div class="detail-progress"><div class="bar"><i id="detailBar"></i></div><span id="detailPct">0%</span></div>
+      <div class="detail-actions">
+        <button class="btn primary" id="detailRead">开始阅读</button>
+        <button class="btn ghost" id="detailReset">标记为未读</button>
+        <button class="btn ghost" id="detailEdit">编辑信息</button>
+        <button class="btn ghost" id="detailCoverChange" hidden>换封面</button>
+        <button class="btn danger ghost" id="detailDelete">删除</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ 换封面（书内选图） ============ -->
+<dialog class="dialog cover-dialog" id="coverDialog">
+  <h3>换封面</h3>
+  <p class="merge-lead" id="coverLead">从这本书里挑一张图当封面。</p>
+  <div class="cover-grid" id="coverGrid"></div>
+  <div class="dialog-actions">
+    <button class="btn ghost" id="coverCancel">取消</button>
+  </div>
+</dialog>
+
+<!-- ============ 编辑书名/作者 ============ -->
+<dialog class="dialog edit-dialog" id="editDialog">
+  <form class="edit-form" id="editForm" method="dialog" novalidate>
+    <h3>编辑书籍信息</h3>
+    <label>书名<input id="editTitle" name="title" type="text" maxlength="120" autocomplete="off" required></label>
+    <label>作者<input id="editAuthor" name="author" type="text" maxlength="80" autocomplete="off" placeholder="留空则显示「未标注作者」"></label>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" id="editCancel">取消</button>
+      <button type="submit" class="btn primary" id="editOk">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ 多选合并 ============ -->
+<dialog class="dialog merge-dialog" id="mergeDialog">
+  <h3>合并为一本</h3>
+  <p class="merge-lead" id="mergeLead">—</p>
+  <div class="merge-list" id="mergeList" role="radiogroup" aria-label="选择保留哪本书的书名与进度"></div>
+  <p class="merge-hint">其余书目会从书架移除，文件仍会保留在新书里；阅读进度只保留所选这一本的。</p>
+  <div class="dialog-actions">
+    <button class="btn ghost" id="mergeCancel">取消</button>
+    <button class="btn primary" id="mergeOk">合并</button>
+  </div>
+</dialog>
+
+<!-- ============ 合并结果 ============ -->
+<dialog class="dialog merge-result-dialog" id="mergeResultDialog">
+  <h3>合并完成</h3>
+  <p class="merge-lead" id="mergeResultLead">—</p>
+  <ul class="chapter-list" id="mergeResultList"></ul>
+  <div class="dialog-actions">
+    <button class="btn ghost" id="mergeResultClose">完成</button>
+    <button class="btn primary" id="mergeResultRead">开始阅读</button>
+  </div>
+</dialog>
+
+<!-- ============ 选择操作条 ============ -->
+<div class="select-dock" id="selectDock">
+  <div class="select-bar" id="selectBar" hidden>
+    <div class="select-count"><strong id="selectCount">0</strong><span>本已选</span></div>
+    <p class="select-note" id="selectNote"></p>
+    <div class="select-actions">
+      <button class="btn ghost" id="selectAll">全选</button>
+      <button class="btn primary" id="selectMerge">合并为一本</button>
+      <button class="btn danger ghost" id="selectDelete">删除</button>
+      <button class="btn ghost" id="selectCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 确认框 ============ -->
+<dialog class="dialog confirm" id="confirmDialog">
+  <h3 id="confirmTitle">确认</h3>
+  <p id="confirmText"></p>
+  <div class="dialog-actions">
+    <button class="btn ghost" id="confirmCancel">取消</button>
+    <button class="btn danger" id="confirmOk">确定</button>
+  </div>
+</dialog>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<input type="file" id="fileInput" multiple accept=".epub,.cbz,.cbr,.zip,.txt,.md,.pdf" hidden>
+
+<script src="./vendor/jszip.min.js"></script>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

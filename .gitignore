@@ -1,0 +1,18 @@
+# 依赖与构建产物
+node_modules/
+www/
+android/app/build/
+android/.gradle/
+android/app/src/main/assets/public/
+
+# Android 本机配置
+android/local.properties
+android/capacitor-cordova-android-plugins/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+
+# 测试与调试临时文件
+.tmp*
+
