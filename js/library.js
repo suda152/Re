@@ -3,12 +3,13 @@
    =========================================================== */
 
 import {
-  $, $$, escapeHtml, fmtBytes, fmtDate, naturalCompare, confirmDialog, toast, fallbackCover,
+  $, $$, escapeHtml, fmtBytes, fmtDate, fmtDuration, fmtDurationShort, naturalCompare, confirmDialog, toast, fallbackCover,
 } from './util.js';
 import { db } from './db.js';
 import { state, emit, clamp01 } from './state.js';
 import { TYPE_LABEL } from './import.js';
 import { bookParts, partKey, cleanPart, sortParts, recalcBook, partChapterLabel, partUnit, formalTitle, seriesInfo } from './parts.js';
+import { getDayLog, summarize, recentDays } from './tracker.js';
 
 const TEXT_TYPES = ['epub', 'txt'];
 
@@ -155,7 +156,7 @@ export function renderRecent() {
 
 /* ---------------- 统计 ---------------- */
 
-export function renderStats() {
+export async function renderStats() {
   const grid = $('#statGrid');
   const books = state.books;
   const reading = books.filter((b) => b.progress > 0 && !b.finished).length;
@@ -167,6 +168,38 @@ export function renderStats() {
     <div class="stat"><span>在读</span><strong>${reading}<em>册</em></strong></div>
     <div class="stat"><span>读完</span><strong>${finished}<em>册</em></strong></div>
     <div class="stat"><span>文件体积</span><strong>${fmtBytes(size)}</strong></div>`;
+
+  // 阅读时长：本周 / 本月 / 今年 / 总计（按天日志聚合，书上的是每本自己的）
+  const log = await getDayLog();
+  const sum = summarize(log);
+  const timeGrid = $('#timeGrid');
+  if (timeGrid) {
+    timeGrid.innerHTML = [
+      ['本周', sum.week], ['本月', sum.month], ['今年', sum.year], ['总时长', sum.total],
+    ].map(([label, sec]) => {
+      const [num, unit] = fmtDurationShort(sec);
+      return `<div class="stat"><span>${label}</span><strong>${num}<em>${unit}</em></strong></div>`;
+    }).join('');
+  }
+
+  // 近 7 天柱状图
+  const dayBars = $('#dayBars');
+  if (dayBars) {
+    const days = recentDays(log, 7);
+    const max = Math.max(60, ...days.map((d) => d.sec)); // 至少 1 分钟，避免一条都看不见
+    dayBars.innerHTML = days.map((d) => {
+      const [mm, dd] = d.day.slice(5).split('-');
+      const label = Number(mm) === new Date().getMonth() + 1 && Number(dd) === new Date().getDate()
+        ? '今天' : `${Number(mm)}/${Number(dd)}`;
+      const [num, unit] = fmtDurationShort(d.sec);
+      return `
+        <div class="bar-row bar-day">
+          <span>${label}</span>
+          <div class="track"><i style="width:${d.sec ? Math.max(2, (d.sec / max) * 100) : 0}%"></i></div>
+          <em>${d.sec ? `${num} ${unit}` : '—'}</em>
+        </div>`;
+    }).join('');
+  }
 
   const groups = [
     ['漫画', books.filter((b) => b.type === 'comic').length],
@@ -1053,7 +1086,8 @@ export function openDetail(id) {
     <div><dt>文件大小</dt><dd>${fmtBytes(book.size)}</dd></div>
     <div><dt>格式</dt><dd>${(book.ext || '').toUpperCase()}</dd></div>
     <div><dt>导入时间</dt><dd>${fmtDate(book.addedAt)}</dd></div>
-    <div><dt>最近阅读</dt><dd>${book.lastReadAt ? fmtDate(book.lastReadAt) : '还没读过'}</dd></div>`;
+    <div><dt>最近阅读</dt><dd>${book.lastReadAt ? fmtDate(book.lastReadAt) : '还没读过'}</dd></div>
+    <div><dt>累计阅读</dt><dd>${fmtDuration(book.timeTotal)}</dd></div>`;
 
   // 多分段的书按章节区分展示，而不是只报「共 N 页」
   const chapters = $('#detailChapters');

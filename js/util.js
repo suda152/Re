@@ -31,6 +31,27 @@ export function fmtDate(ts) {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** 阅读时长：完整表达（详情页）。「3 小时 24 分」「45 分钟」 */
+export function fmtDuration(sec) {
+  sec = Math.round(Number(sec) || 0);
+  if (sec <= 0) return '还没读过';
+  if (sec < 60) return `${sec} 秒`;
+  const h = Math.floor(sec / 3600);
+  const m = Math.round((sec % 3600) / 60);
+  if (h === 0) return `${m} 分钟`;
+  if (h < 100) return m ? `${h} 小时 ${m} 分` : `${h} 小时`;
+  return `${h.toLocaleString()} 小时`;
+}
+
+/** 阅读时长：紧凑两段式 [数字, 单位]（统计卡）。 */
+export function fmtDurationShort(sec) {
+  sec = Number(sec) || 0;
+  if (sec < 60) return ['0', '分钟'];
+  if (sec < 3600) return [String(Math.round(sec / 60)), '分钟'];
+  const h = sec / 3600;
+  return [h >= 100 ? String(Math.round(h)) : h.toFixed(1), '小时'];
+}
+
 /** 文件名自然排序：page2 < page10 */
 export function naturalCompare(a, b) {
   return String(a).localeCompare(String(b), 'zh-Hans-CN', { numeric: true, sensitivity: 'base' });

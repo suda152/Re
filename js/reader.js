@@ -12,6 +12,7 @@ import { bookParts } from './parts.js';
 import { renderAll } from './library.js';
 import { platform, isWideLandscape } from './platform.js';
 import { native, holdAwake } from './native.js';
+import { startTracking, stopTracking } from './tracker.js';
 
 const THEMES = [['light', '纸白'], ['sepia', '米黄'], ['dark', '深色'], ['black', '纯黑']];
 const FONTS = [['serif', '宋体'], ['sans', '黑体'], ['kai', '楷体']];
@@ -180,12 +181,16 @@ export async function openBook(id) {
   native.immersive(true);
   if (prefs.device?.keepAwake !== false) holdAwake(true);
 
+  // 阅读时长追踪：页面可见时每 15 秒记一次
+  startTracking(book);
+
   requestAnimationFrame(() => reader.classList.remove('opening'));
 }
 
 export async function closeReader() {
   if (!engine) return;
   saveNow();
+  await stopTracking();
   engine.destroy();
   engine = null;
 

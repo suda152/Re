@@ -928,6 +928,10 @@ body.has-selection .toast-wrap { bottom: 92px; }
 .bar-row .track i { display: block; height: 100%; background: var(--ink-2); border-radius: 0; }
 .bar-row em { font-style: normal; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
+/* 近 7 天阅读时长：日期列更宽，数值列带单位 */
+.bars-day .bar-row { grid-template-columns: 56px 1fr 72px; }
+.bars-day .bar-row .track { height: 10px; }
+
 /* ================= 设置 ================= */
 
 .field {
