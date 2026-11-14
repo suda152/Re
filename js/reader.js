@@ -159,6 +159,8 @@ export async function openBook(id) {
   document.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', onResize);
   stage.addEventListener('click', onStageClick);
+  stage.addEventListener('pointerdown', onStagePointerDown, { passive: true });
+  stage.addEventListener('pointercancel', onStagePointerCancel, { passive: true });
   stage.addEventListener('pointerdown', onSwipeStart, { passive: true });
   stage.addEventListener('pointerup', onSwipeEnd, { passive: true });
   stage.addEventListener('pointercancel', onSwipeCancel, { passive: true });
@@ -198,6 +200,8 @@ export async function closeReader() {
   window.removeEventListener('resize', onResize);
   const stage = $('#readerStage');
   stage.removeEventListener('click', onStageClick);
+  stage.removeEventListener('pointerdown', onStagePointerDown);
+  stage.removeEventListener('pointercancel', onStagePointerCancel);
   stage.removeEventListener('pointerdown', onSwipeStart);
   stage.removeEventListener('pointerup', onSwipeEnd);
   stage.removeEventListener('pointercancel', onSwipeCancel);
@@ -321,31 +325,51 @@ function toggleFullscreen() {
   else document.documentElement.requestFullscreen?.().catch(() => toast('当前环境不支持全屏'));
 }
 
-/* ---------------- 点击分区 ---------------- */
+/* ---------------- 点击分区（轻触 vs 滑动） ---------------- */
+
+// 触屏：起手位置记录在 pointerdown，落点位移大或按得久就算滑动/滚动，
+// 不再当作点按处理——滚动条漫、轻扫翻页都不会把工具条搅出来。
+// 只有干净利落、位移极小的「轻触」才进入分区逻辑。
+let tapStart = null;
+const TAP_MAX_MOVE = 12; // 位移超过 12px = 手势
+const TAP_MAX_MS = 600;  // 按住超过 600ms = 长按/滚动
+
+function onStagePointerDown(e) {
+  if (e.pointerType === 'mouse') { tapStart = null; return; }
+  tapStart = { x: e.clientX, y: e.clientY, t: Date.now(), id: e.pointerId };
+}
+
+function onStagePointerCancel() { tapStart = null; }
 
 function onStageClick(e) {
+  // 先消费起手记录：suppress 等提前返回的分支也不能把旧记录留给下一次点击
+  // click 是 MouseEvent，没有 pointerId，不能按 pointerId 配对；
+  // 单指场景下「最近一次按下」就是这次点击的起手
+  const start = tapStart;
+  tapStart = null;
   if (Date.now() < suppressStageClickUntil) return;
+  if (start && (Math.hypot(e.clientX - start.x, e.clientY - start.y) > TAP_MAX_MOVE
+      || Date.now() - start.t > TAP_MAX_MS)) return; // 滑动/滚动/长按，不算点按
   if (e.target.closest('a[data-href]')) return;
   if (window.getSelection()?.toString()) return;
   if (panel) { setPanel(null); return; }
-  if (chromeHidden) { wake(); return; }
   if (engine?.isZoomed) return;
 
   const scrollMode = book?.type === 'comic' && engine?.mode === 'scroll';
-  if (scrollMode) { toggleChrome(); return; }
-
-  // 日漫（RTL）阅读方向从右往左：右侧点按=上一页，左侧=下一页
-  const rtl = book?.type === 'comic' && localPrefs?.rtl;
   const x = e.clientX / window.innerWidth;
-  if (rtl) {
-    if (x > 0.74) { engine?.prev(); wake(); }
-    else if (x < 0.26) { engine?.next(); wake(); }
-    else toggleChrome();
-  } else {
-    if (x < 0.26) { engine?.prev(); wake(); }
-    else if (x > 0.74) { engine?.next(); wake(); }
-    else toggleChrome();
-  }
+  const zone = x < 0.26 ? 'left' : x > 0.74 ? 'right' : 'center';
+
+  // 工具条只由「点屏幕中心」开关：隐藏时中心点唤出，显示时中心点收起
+  if (zone === 'center') { toggleChrome(); return; }
+
+  // 条漫两侧不做翻页，轻点不干扰滚动
+  if (scrollMode) return;
+
+  // 两侧只翻页，不再呼出工具条；日漫（RTL）方向反转
+  const rtl = book?.type === 'comic' && localPrefs?.rtl;
+  const turnNext = rtl ? zone === 'left' : zone === 'right';
+  if (turnNext) engine?.next();
+  else engine?.prev();
 }
 
 /* ---------------- 触屏轻扫翻页 ---------------- */
@@ -395,7 +419,6 @@ function onSwipeEnd(e) {
   else engine.prev();
 
   suppressStageClickUntil = Date.now() + 420;
-  wake();
 }
 
 /* ---------------- 目录 ---------------- */
