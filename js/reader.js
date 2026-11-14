@@ -334,10 +334,18 @@ function onStageClick(e) {
   const scrollMode = book?.type === 'comic' && engine?.mode === 'scroll';
   if (scrollMode) { toggleChrome(); return; }
 
+  // 日漫（RTL）阅读方向从右往左：右侧点按=上一页，左侧=下一页
+  const rtl = book?.type === 'comic' && localPrefs?.rtl;
   const x = e.clientX / window.innerWidth;
-  if (x < 0.26) { engine?.prev(); wake(); }
-  else if (x > 0.74) { engine?.next(); wake(); }
-  else toggleChrome();
+  if (rtl) {
+    if (x > 0.74) { engine?.prev(); wake(); }
+    else if (x < 0.26) { engine?.next(); wake(); }
+    else toggleChrome();
+  } else {
+    if (x < 0.26) { engine?.prev(); wake(); }
+    else if (x > 0.74) { engine?.next(); wake(); }
+    else toggleChrome();
+  }
 }
 
 /* ---------------- 触屏轻扫翻页 ---------------- */
